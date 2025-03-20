@@ -1,67 +1,64 @@
-# Documentação de Design do Microserviço
+# Microservice Design Documentation
 
-## Visão Geral
+## High-Level Overview
 
-Este documento detalha um microserviço projetado para lidar com grandes volumes de dados e garantir escalabilidade e manutenção. Ele inclui endpoints robustos de API para criação e leitura de dados, suportados por implantação conteinerizada e Kubernetes para orquestração.
+In this document, we detail a microservice designed to handle large volumes of data, in order to ensure scalability and maintainability. It includes API endpoints for creating and reading data, deployed in a Docker container and Kubernetes for orchestration.
 
-1. **Introdução**
-2. **Requisitos e Objetivos**
-3. **Visão Geral da Arquitetura**
-4. **Pilha de Tecnologia**
-5. **Containerização**
-6. **Implantação no Kubernetes**
-7. **Pipeline de CI/CD**
-8. **Estratégia de Testes**
+1. **Introduction**
+2. **Requirements**
+3. **Architecture Overview**
+4. **Technology Stack**
+5. **Containerization**
+6. **Kubernetes Deployment**
+7. **CI/CD Pipeline**
+8. **Testing Strategy**
 
-## 1. Introdução
-As duas funcionalidades seguintes são propostas para o microserviço:
-- **POST /data**: Aceitar e validar entrada JSON antes de persistir em um banco de dados.
-- **GET /data**: Recuperar e retornar os dados armazenados.
+## 1. Introduction
+The following two endpoints are available in the microservice:
+- **POST /data**: Accept and validate JSON input before persisting it to a database.:
+- **GET /data**: Retrieve and return stored data.
 
-O microserviço foi projetado para implementar uma arquitetura REST **sem estado**, com um design em camadas para separação de responsabilidades.
+The microservice is designed to implement a REST architecture **stateless**, with a layered design for separation of responsibilities.
 
-## 2. Requisitos e Objetivos
+## 2. Requirements
 
 ### Requisitos Funcionais
-- Aceitar entrada JSON via uma API REST.
-- Validar e persistir os dados.
-- Recuperar dados armazenados.
+- Accept JSON input via a REST API.
+- Validate and persist data.
+- Recover stored data.
 
-### Objetivos de Desempenho
-Um objetivo chave do design é manter tempos de resposta abaixo de **500ms**. Além disso, o sistema deve ser capaz de suportar bilhões de registros com menos de **10% de degradação de desempenho**.
+## 3. Architecture Overview
 
-## 3. Visão Geral da Arquitetura
+### **Diagrama: Layered Architecture**
+![Layered Architecture](./diagrams/api-diagram.png)
 
-### **Diagrama: Arquitetura em Camadas**
-![Arquitetura em Camadas](./diagrams/api-diagram.png)
+### Components
+1. **API Layer**
+  - Controllers that handle HTTP requests.
+  - Performs validation of input data.
+  - Formats responses.
+2. **Service Layer**
+  - Singletons that manage business logic.
+  - Interface with the database layer for CRUD operations.
+3. **Database Layer**
+  - Persistent data storage.
+  - Supports scalable read and write operations.
 
-### Componentes
-1. **Camada de API**
-   - Controladores que lidam com requisições HTTP.
-   - Realiza validação dos dados de entrada.
-   - Formata as respostas.
-2. **Camada de Serviço**
-   - Singletons que gerenciam a lógica de negócios.
-   - Interface com a camada de banco de dados para operações CRUD.
-3. **Camada de Banco de Dados**
-   - Armazenamento persistente de dados.
-   - Suporta operações escaláveis de leitura e escrita.
+## 4. Technology Stack
 
-## 4. Pilha de Tecnologia
-
-### Justificativas
-- **Banco de Dados:** PostgreSQL
-  - Suporta alta escalabilidade e conformidade com ACID.
-  - Suporte extensivo para indexação e otimização de consultas.
+### Justifications
+- **Database:** PostgreSQL
+  - Supports high scalability and ACID compliance.
+  - Extensive support for indexing and query optimization.
 - **Framework:** NestJS (Node.js)
-  - Leve, I/O não bloqueante.
-  - Estrutura opinativa para manutenibilidade.
-- **Containerização:** Docker
-  - Garante portabilidade e consistência.
-- **Orquestração:** Kubernetes
-  - Suporta escalabilidade horizontal e tolerância a falhas.
+  - Lightweight, non-blocking I/O.
+  - Opinionated structure for maintainability.
+- **Containerization:** Docker
+  - Ensures portability and consistency.
+- **Orchestration:** Kubernetes
+  - Supports horizontal scalability and fault tolerance.
 
-## 5. Containerização
+## 5. Containerization
 
 
 ### Dockerfile
@@ -81,18 +78,19 @@ RUN npm run build
 CMD [ "npm", "run", "start:dev" ]
 ```
 
-### Explicação
-O Dockerfile utiliza uma imagem base leve do Node.js para garantir desempenho ideal e uma pegada reduzida. Ele começa configurando o diretório de trabalho dentro do contêiner para manter uma estrutura limpa e organizada. Os arquivos relacionados ao pacote são copiados primeiro para aproveitar o mecanismo de cache do Docker, o que permite que as dependências sejam instaladas de maneira eficiente usando o npm. O código-fonte da aplicação é então copiado para o contêiner, seguido pela exposição da porta necessária para permitir o acesso externo. Por fim, a aplicação é iniciada usando o script de produção do NestJS, garantindo que ela seja executada conforme esperado em um ambiente de produção.
+### Explanation
+The Dockerfile uses a lightweight Node.js base image to ensure performance and small size. It starts by setting up the working directory inside the container to maintain a clean and organized structure. Package-related files are copied first to take advantage of Docker’s caching mechanism, which allows dependencies to be installed efficiently using npm. The application source code is then copied into the container, followed by exposing the necessary port to allow external access. The application is then started using the NestJS production script, ensuring that it runs as expected in a production environment.
 
-## 6. Implantação no Kubernetes
 
-### Estratégia de Implantação
-- Escalonamento automático de Pods horizontal baseado no uso de CPU.
-- PersistentVolumeClaims para armazenamento de banco de dados.
+## 6. Kubernetes Deployment
 
-### Exemplos de Arquivos YAML
+### Deployment Strategy
+- Horizontal Pod autoscaling based on CPU usage.
+- PersistentVolumeClaims for database storage.
 
-#### Implantação
+### YAML File Examples
+
+#### Deployment
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -130,42 +128,42 @@ spec:
     app: data-service
 ```
 
-## 7. Pipeline de CI/CD
+## 7. CI/CD Pipeline
 
-### Diagrama da Pipeline
+### Pipeline Diagram
 ![Pipeline de CI/CD](./diagrams/cicd-diagram.png)
 
-### Etapas
-1. **Testes Unitários:** Validar funcionalidades principais.
-2. **Testes de Integração:** Validar interações entre a API e o banco de dados.
-3. **Construção do Docker:** Criar e publicar a imagem do contêiner.
-4. **Implantação no Kubernetes:** Implantar a imagem mais recente.
+### Steps
+1. **Unit Tests:** Validate core functionality.
+2. **Integration Tests:** Validate interactions between the API and the database.
+3. **Docker Build:** Create and publish the container image.
+4. **Kubernetes Deployment:** Deploy the latest image.
 
-## 8. Estratégia de Testes
+## 8. Testing Strategy
 
-### Testes Unitários
-- Foco: Validação de entrada, interação com o banco de dados.
-- Ferramentas: Jest, mocha.
-- Focar menos na cobertura geral e mais nos caminhos críticos.
-- Garantir que um bom número de cenários de validação de dados seja coberto. A consistência dos dados é extremamente importante para este serviço.
+### Unit Testing
+- Focus: Input validation, database interaction.
+- Tools: Jest, mocha.
+- Focus less on overall coverage and more on critical paths.
+- Ensure that a good number of data validation scenarios are covered. Data consistency is extremely important for this service.
 
-### Testes de Integração
-- Validar a camada da API e as interações com o banco de dados.
-- Ter um script para popular o banco de dados com dados de teste e então chamar os endpoints da API, garantindo que os dados sejam retornados como esperado.
-- Garantir que o banco de dados esteja em um estado limpo antes e depois dos testes.
+### Integration Testing
+- Validate the API layer and database interactions.
+- Have a script to populate the database with test data and then call the API endpoints, ensuring that the data is returned as expected.
+- Ensure that the database is in a clean state before and after testing.
 
-### Testes de Desempenho
-- Simular alta concorrência usando ferramentas como JMeter.
+### Performance Testing
+- Simulate high concurrency using tools like JMeter.
 
-### Testes Manuais
-- Para um conjunto mínimo de endpoints conforme proposto nos requisitos, testes manuais podem ser feitos para adicionar uma camada extra de validação.
+### Manual Testing
+- For a minimal set of endpoints as proposed in the requirements, manual testing can be done to add an extra layer of validation.
 
-### Começando
-**Visão Geral do Projeto:** Microserviço para ingestão e recuperação de dados com foco em escalabilidade.
+### Getting Started
+**Project Overview:** Microservice for data ingestion and retrieval with a focus on scalability.
 
-**Configuração:**
-1. Clone o repositório.
-2. Execute `docker-compose up`.
-3. Acesse a API em `http://localhost:3000`.
+**Setup:**
+1. Clone the repository.
+2. Run `docker-compose up`.
+3. Access the API at `http://localhost:3000`.
 
 
