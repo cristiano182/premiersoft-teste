@@ -22,7 +22,7 @@ The microservice is designed to implement a REST architecture **stateless**, wit
 
 ## 2. Requirements
 
-### Requisitos Funcionais
+### Requirements
 - Accept JSON input via a REST API.
 - Validate and persist data.
 - Recover stored data.
